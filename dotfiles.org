@@ -1,0 +1,174 @@
+* Makefile
+Running This file will setup a new system.
+#+BEGIN_SRC makefile-gmake :noweb yes :tangle Makefile
+install-yay:
+		./install-yay.sh
+
+install-packages:
+		yay -S reflector
+		sudo reflector --verbose --latest 50 --sort rate --save /etc/pacman.d/mirrorlist
+		yay -S - < packages.txt
+
+link-config:
+		stow --restow .
+
+tangle:
+		find . -type f -name "*.org" -exec em-tangle {} \;
+
+enable-services:
+		./enable-services.sh
+		<<system-services()>>
+#+END_SRC
+** Install =yay=
+#+BEGIN_SRC sh :tangle install-yay.sh :shebang #!/bin/sh
+cd ~
+sudo pacman -Sy git
+git clone https://aur.archlinux.org/yay.git
+cd yay
+makepkg -si
+cd ..
+rm -rf yay
+#+END_SRC
+** Enable Services
+Setup all our =systemd= services.
+#+NAME: systemd-services
+- mpd
+- syncthing
+- automount
+- inkscapefigures
+- inkscapewatch
+- checkmail.timer
+- syncmedia.timer
+- bat-shutdown.timer
+We a quick script to turn these services into the appropriate =systemd=
+commands.
+#+NAME: systemd-commands
+#+BEGIN_SRC sh :tangle enable-services.sh :shebang #!/bin/sh :var services=systemd-services
+for service in $services; do
+    for action in "enable" "start"; do
+        systemctl --user $action $service
+    done
+done
+#+END_SRC
+** Python Packages
+#+NAME: python-packages
+- inkscape-figures
+#+BEGIN_SRC sh :var packages=python-packages
+for package in $packages; do
+    pip install --user $package
+done
+#+END_SRC
+* Suspend
+Lock the screen on suspend.
+#+BEGIN_SRC systemd :tangle /sudo::/etc/systemd/system/suspend@.service
+[Unit]
+Description=User suspend actions
+Before=sleep.target
+
+[Service]
+User=%I
+Type=simple
+Environment=DISPLAY=:0
+ExecStart=/usr/bin/slock
+ExecStartPost=/usr/bin/sleep 1
+
+[Install]
+WantedBy=sleep.target
+#+END_SRC
+Dock to the appropriate state (external monitor or just laptop monitor) after resuming.
+#+BEGIN_SRC systemd :tangle /sudo::/etc/systemd/system/resume@.service
+[Unit]
+Description=User suspend actions
+After=sleep.target
+
+[Service]
+User=%I
+Type=simple
+ExecStart=/home/%I/bin/dock
+
+[Install]
+WantedBy=sleep.target
+#+END_SRC
+Now we initialize these services.
+#+NAME: sys-services
+- suspend
+- resume
+#+NAME: system-services
+#+BEGIN_SRC sh :var services=sys-services :results output :eval yes
+for service in $services; do
+    echo "systemctl enable $service@gautam"
+done
+#+END_SRC
+* Watch for HDMI monitor
+This [[http://jasonwryan.com/blog/2014/01/20/udev/][blog post]] was integral in getting this working.
+#+BEGIN_SRC conf :tangle /sudo::/etc/udev/rules.d/98-monitor-hotplug.rules
+ACTION=="change", KERNEL=="card0", SUBSYSTEM=="drm", ENV{DISPLAY}=":0", ENV{XAUTHORITY}="/home/gautam/.Xauthority", RUN+="/bin/bash /home/gautam/bin/dock"
+#+END_SRC
+Reload the =udev= rules.
+#+BEGIN_SRC sh :results silent :dir /sudo::
+udevadm control --reload-rules
+#+END_SRC
+* Mount USB drives to =/media=
+The default is =/run/media/$user=.
+#+BEGIN_SRC conf :tangle /sudo::/etc/udev/rules.d/99-udisks2.rules
+ENV{ID_FS_USAGE}=="filesystem|other|crypto", ENV{UDISKS_FILESYSTEM_SHARED}="1"
+#+END_SRC
+Clean stale mountpoints on boot.
+#+BEGIN_SRC conf :tangle /sudo::/etc/tmpfiles.d/media.conf
+D /media 0755 root root 0 -
+#+END_SRC
+* Manage =mailto= links with Emacs
+I use =notmuch=, which comes with a desktop entry to open email links in Emacs. I
+just want it to use =emacsclient=. The =Exec= line is the one I changed.
+#+BEGIN_SRC conf :tangle /sudo::/usr/share/applications/notmuch-emacs-mua.desktop
+[Desktop Entry]
+Name=Notmuch (emacs interface)
+GenericName=Email Client
+Comment=Emacs based email client
+Exec=notmuch-emacs-mua --hello --client --create-frame %u
+MimeType=x-scheme-handler/mailto;
+Icon=emblem-mail
+Terminal=false
+Type=Application
+Categories=Network;Email;
+X-Desktop-File-Install-Version=0.24
+#+END_SRC
+* Use =dunst= over =notification-daemon=
+This is a simple replacement in =org.freedesktop.Notifications=.
+#+BEGIN_SRC conf :tangle /sudo::/usr/share/dbus-1/services/org.freedesktop.Notifications.service
+[D-BUS Service]
+Name=org.freedesktop.Notifications
+Exec=/usr/bin/dunst
+#+END_SRC
+* Disable Wake-on-LAN
+Save some battery.
+#+BEGIN_SRC conf :tangle /sudo::/etc/udev/rules.d/81-wifi-powersave.rules
+ACTION=="add", SUBSYSTEM=="net", KERNEL=="wl*", RUN+="/usr/bin/iw dev $name set power_save on"
+#+END_SRC
+* Default =xdg= applications
+Sometimes the defaults aren't configured well.
+#+NAME: xdg-applications
+| mpv                         | audio/flac              |
+| mpv                         | audio/mpeg              |
+| mpv                         | video/m2v               |
+| mpv                         | video/mp4               |
+| zathura                     | application/pdf         |
+| notmuch-emacs-mua           | x-scheme-handler/mailto |
+| org.qutebrowser.qutebrowser | x-scheme-handler/http   |
+| org.qutebrowser.qutebrowser | x-scheme-handler/https  |
+| feh                     | image/jpeg              |
+| feh                     | image/png               |
+#+BEGIN_SRC sh apps=xdg-applications
+for app in $apps; do
+    xdg-mime default ${app[0]}.desktop ${app[1]}
+done
+#+END_SRC
+
+#+RESULTS:
+
+* Options
+# Local variables:
+# eval: (add-hook 'after-save-hook 'org-babel-tangle nil t)
+# end:
+#  LocalWords:  inkscapefigures inkscapewatch syncthing automount syncmedia
+#  LocalWords:  inkscape

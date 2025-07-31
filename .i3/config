@@ -1,0 +1,221 @@
+set $exec exec --no-startup-id
+
+exec-always --no-startup-id dock
+$exec dock
+
+$exec /usr/bin/emacs-29.4
+$exec qutebrowser
+$exec redshift-gtk
+
+$exec transmission-daemon
+
+set $mod Mod4
+
+floating_modifier $mod
+
+font pango:monospace 8
+
+default_border none
+hide_edge_borders both
+
+bindsym $mod+d exec rofi -show combi
+bindsym $mod+b exec rofi -show window -dpi 1
+
+# kill focused window
+bindsym $mod+q kill
+# split in horizontal orientation
+bindsym $mod+h split h
+
+# split in vertical orientation
+bindsym $mod+v split v
+
+# enter fullscreen mode for the focused container
+bindsym $mod+f fullscreen toggle
+
+# change container layout (stacked, tabbed, toggle split)
+bindsym $mod+s layout stacking
+bindsym $mod+w layout tabbed
+bindsym $mod+e layout toggle split
+
+# toggle tiling / floating
+bindsym $mod+Shift+space floating toggle
+
+# change focus between tiling / floating windows
+bindsym $mod+space focus mode_toggle
+
+# focus the parent container
+bindsym $mod+a focus parent
+
+# focus the child container
+#bindsym $mod+d focus child
+
+set $mode_monitors Monitor setup: (0) laptop only (1) external (2) mirror (3) external only (4) reset
+mode "$mode_monitors" {
+  bindsym 0 $exec "xrandr --output DP1 --off", mode "default"
+  bindsym 1 $exec "/home/gautam/bin/dock", mode "default"
+  bindsym 2 exec "xrandr --output eDP1 --mode 3200x1800 --output DP1 --same-as DP1 --mode 3840x2160 --scale 0.833x0.833"
+  bindsym 3 exec "xrandr --output eDP1 --off"
+  bindsym 4 exec "xrandr --output eDP1 --auto --primary && /home/gautam/bin/dock"
+
+  # back to normal: Enter or Escape
+  bindsym Return mode "default"
+  bindsym Escape mode "default"
+}
+
+bindsym $mod+p $exec dock
+bindsym $mod+shift+p mode "$mode_monitors"
+
+bindsym XF86MonBrightnessDown $exec change-brightness - 5
+bindsym XF86MonBrightnessUp $exec change-brightness + 5
+
+set $ws1 "1"
+bindsym $mod+1 workspace $ws1
+bindsym $mod+Shift+1 move container to workspace $ws1
+set $ws2 "2"
+bindsym $mod+2 workspace $ws2
+bindsym $mod+Shift+2 move container to workspace $ws2
+set $ws3 "3"
+bindsym $mod+3 workspace $ws3
+bindsym $mod+Shift+3 move container to workspace $ws3
+set $ws4 "4"
+bindsym $mod+4 workspace $ws4
+bindsym $mod+Shift+4 move container to workspace $ws4
+set $ws5 "5"
+bindsym $mod+5 workspace $ws5
+bindsym $mod+Shift+5 move container to workspace $ws5
+set $ws6 "6"
+bindsym $mod+6 workspace $ws6
+bindsym $mod+Shift+6 move container to workspace $ws6
+set $ws7 "7"
+bindsym $mod+7 workspace $ws7
+bindsym $mod+Shift+7 move container to workspace $ws7
+set $ws8 "8"
+bindsym $mod+8 workspace $ws8
+bindsym $mod+Shift+8 move container to workspace $ws8
+set $ws9 "9"
+bindsym $mod+9 workspace $ws9
+bindsym $mod+Shift+9 move container to workspace $ws9
+set $ws10 "10"
+bindsym $mod+0 workspace $ws10
+bindsym $mod+Shift+0 move container to workspace $ws10
+
+workspace $ws1 output DP-1 DP1 primary
+workspace $ws2 output DP-1 DP1 primary
+workspace $ws3 output DP-1 DP1 primary
+workspace $ws4 output primary
+workspace $ws5 output primary
+workspace $ws6 output primary
+workspace $ws7 output primary
+workspace $ws8 output primary
+workspace $ws9 output primary
+
+assign [class="^qutebrowser$"] → $ws2
+assign [class="^mpv$"] → $ws4
+assign [class="Slack"] → $ws4
+assign [class="^Inkscape$"] → $ws6
+assign [class="^qtcreator$"] → $ws6
+
+for_window [class="^Emacs$" title="^floatingEmacs$"] floating enable
+for_window [class="^Emacs$" title="^org-capture-pop-frame$"] move container to workspace current
+
+focus_follows_mouse no
+
+bindsym $mod+shift+s $exec $HOME/.i3/i3-display-swap.sh
+
+# change focus
+bindsym $mod+j focus right
+bindsym $mod+k focus left
+bindsym $mod+l focus up
+bindsym $mod+semicolon focus down
+
+# alternatively, you can use the cursor keys:
+bindsym $mod+Left focus left
+bindsym $mod+Down focus down
+bindsym $mod+Up focus up
+bindsym $mod+Right focus right
+
+# move focused window
+bindsym $mod+Shift+j move right
+bindsym $mod+Shift+k move left
+bindsym $mod+Shift+l move up
+bindsym $mod+Shift+semicolon move down
+
+# alternatively, you can use the cursor keys:
+bindsym $mod+Shift+Left move left
+bindsym $mod+Shift+Down move right
+bindsym $mod+Shift+Up move up
+bindsym $mod+Shift+Right move down
+
+# resize window (you can also use the mouse for that)
+mode "resize" {
+        # These bindings trigger as soon as you enter the resize mode
+
+        # Pressing left will shrink the window’s width.
+        # Pressing right will grow the window’s width.
+        # Pressing up will shrink the window’s height.
+        # Pressing down will grow the window’s height.
+        bindsym j resize shrink width 10 px or 10 ppt
+        bindsym k resize grow height 10 px or 10 ppt
+        bindsym l resize shrink height 10 px or 10 ppt
+        bindsym semicolon resize grow width 10 px or 10 ppt
+
+        # same bindings, but for the arrow keys
+        bindsym Left resize shrink width 10 px or 10 ppt
+        bindsym Down resize grow height 10 px or 10 ppt
+        bindsym Up resize shrink height 10 px or 10 ppt
+        bindsym Right resize grow width 10 px or 10 ppt
+
+        # back to normal: Enter or Escape or $mod+r
+        bindsym Return mode "default"
+        bindsym Escape mode "default"
+        bindsym $mod+r mode "default"
+}
+
+bindsym $mod+r mode "resize"
+
+bindsym XF86AudioMute $exec "change-volume toggle"
+bindsym XF86AudioLowerVolume $exec "change-volume 3%- unmute"
+bindsym XF86AudioRaiseVolume $exec "change-volume 3%+ unmute"
+
+bindsym XF86AudioPrev $exec music-control prev
+bindsym XF86AudioNext $exec music-control next
+bindsym XF86AudioPlay $exec music-control toggle
+bindsym Pause $exec music-control toggle
+
+bindsym --release Print $exec "scrot -s '/home/gautam/pictures/screenshots/%F_%T_$wx$h.png' -e 'xclip -selection clipboard -target image/png -i $f'"
+bindsym --release Shift-Print $exec "scrot '/home/gautam/pictures/screenshots/%F_%T_$wx$h.png' -e 'xclip -selection clipboard -target image/png -i $f'"
+bindsym --release Ctrl-Print $exec "scrot '/home/gautam/pictures/screenshots/%F_%T_$wx$h.png'"
+
+set $term alacritty
+bindsym $mod+Return $exec emacsclient -e "(call-interactively 'eshell-other-frame)"
+bindsym $mod+Shift+Return exec $term
+
+bindsym $mod+c $exec checkmail
+
+set $mode_system System (l) lock, (e) logout, (s) suspend, (h) hibernate, (r) reboot, (Shift+s) shutdown
+mode "$mode_system" {
+    bindsym l $exec slock, mode "default"
+    bindsym e $exec i3-msg exit, mode "default"
+    bindsym s $exec systemctl suspend, mode "default"
+    bindsym h $exec systemctl hibernate, mode "default"
+    bindsym r $exec systemctl reboot, mode "default"
+    bindsym Shift+s $exec systemctl poweroff -i, mode "default"
+
+    # back to normal: Enter or Escape
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+
+bindsym $mod+Pause mode "$mode_system"
+bindsym $mod+Delete mode "$mode_system"
+
+# reload the configuration file
+bindsym $mod+Shift+c reload
+# restart i3 inplace (preserves your layout/session, can be used to upgrade i3)
+bindsym $mod+Shift+r restart
+# exit i3 (logs you out of your X session)
+bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'You pressed the exit shortcut. Do you really want to exit i3? This will end your X session.' -B 'Yes, exit i3' 'i3-msg exit'"
+
+bar {
+    status_command i3status --config=~/.i3/.i3status.conf
+}

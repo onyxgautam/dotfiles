@@ -1,0 +1,33 @@
+#!/bin/sh
+
+MONITOR="DP1"
+STATUS=`cat /sys/class/drm/card1/card1-DP-1/status`
+
+function connect(){
+    xrandr --output $MONITOR --auto --above eDP1
+}
+
+function disconnect(){
+    xrandr --output $MONITOR --off
+    amixer sset Master mute
+}
+
+if [ $STATUS == "connected" ]; then
+    connect
+elif [ $STATUS == "disconnected" ]; then
+    disconnect
+else
+  exit
+fi
+
+xset r rate 125 75
+setxkbmap -option ctrl:nocaps
+
+if mount | grep -q /dev/disk/by-uuid/$DRIVE_LOC ; then
+    udisksctl mount -b /dev/disk/by-uuid/$DRIVE_LOC
+fi
+
+xrandr --output eDP1 --scale 1x1
+
+xinput set-prop "DLL0704:01 06CB:76AE Touchpad" "libinput Natural Scrolling Enabled" 1
+xinput set-prop "DLL0704:01 06CB:76AE Touchpad" "libinput Tapping Enabled" 1

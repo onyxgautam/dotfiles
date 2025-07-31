@@ -1,0 +1,29 @@
+#!/bin/sh
+dirs="music videos pictures books org records"
+drive="/media/$DRIVE_LOC"
+exclude_file=".cache/rsync-exclude.txt"
+excludes="$dirs dotfiles school .cache .mozilla .zoom .local"
+if [ -d "$drive" ]; then
+    :> ~/$exclude_file
+    for dir in $excludes
+    do
+        echo "$dir" >> ~/$exclude_file
+    done
+
+    for dir in $dirs
+    do
+        rsync -hauv --no-links --progress --exclude /.git ~/$dir/ $drive/$dir
+    done
+
+    rsync -hauv --no-links --progress ~/Camera/ $drive/pictures/Camera
+
+    for f in ~/videos/YouTube/*; do
+        if [ -d "$f" ]; then
+            rm -rf "$f"
+        fi
+    done
+
+    rsync -hauv --progress --exclude-from ~/$exclude_file ~/ $drive/home
+else
+    echo "Drive location not found!"
+fi

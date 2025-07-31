@@ -1,0 +1,11 @@
+/**/default.target.wants/
+/**/timers.target.wants/
+
+/**/mpd/database
+/**/mpd/log
+/**/mpd/playlists
+/**/mpd/state
+
+**/inkscape-figures/roots
+
+/**/qutebrowser/qsettings/QtProject.conf

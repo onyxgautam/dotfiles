@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Arbitrary but unique message id
+msgId="991050"
+
+xbacklight "$@" > /dev/null
+
+brightness="$(printf %.f $(xbacklight))"
+dunstify -a "change-brightness" -r "$msgId" "Brightness: ${brightness}%" "$(getProgressString 15 "#" "-" $brightness)"
+
+canberra-gtk-play -i audio-volume-change -d "change-volume"

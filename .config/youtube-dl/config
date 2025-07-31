@@ -1,0 +1,24 @@
+-i
+-o "~/videos/YouTube/%(uploader)s [%(uploader_id)s]/%(upload_date)s - %(title)s - (%(duration)ss) [%(resolution)s] [%(id)s].%(ext)s"
+
+# Archive Settings
+--download-archive ~/videos/YouTube/downloaded.txt
+
+# Uniform Format
+--prefer-ffmpeg
+--format 'bestvideo[height<=1080]+bestaudio'
+--merge-output-format mkv
+
+# Get All Subs to SRT
+--write-sub
+--embed-subs
+--all-subs
+--convert-subs srt
+
+# Get metadata
+--add-metadata
+--write-description
+--write-thumbnail
+
+# Debug
+# -v

@@ -1,0 +1,300 @@
+#+PROPERTY: header-args :tangle config
+* Startup
+This cleans up the syntax a little.
+#+begin_src conf
+set $exec exec --no-startup-id
+#+end_src
+The first thing I do is set up my screens. This is a script in my =~/bin= that
+checks if I have an external monitor plugged in and uses =xrandr= accordingly.
+This script also sets some keybindings, key repeat delay and speed, and trackpad
+behaviour.
+#+begin_src conf
+exec-always --no-startup-id dock
+$exec dock
+#+end_src
+Then I start up Emacs and the browser, and make the screen not too blue.
+#+begin_src conf
+$exec /usr/bin/emacs-29.4
+$exec qutebrowser
+$exec redshift-gtk
+#+end_src
+Set up the torrent client.
+#+begin_src conf
+$exec transmission-daemon
+#+end_src
+* Basic Controls
+This corresponds to the Super/Windows key on my keyboard.
+#+begin_src conf
+set $mod Mod4
+#+end_src
+Using the mouse with this modifier drags floating windows.
+#+begin_src conf
+floating_modifier $mod
+#+end_src
+I couldn't get Hack to work right with this.
+#+begin_src conf
+font pango:monospace 8
+#+end_src
+This removes borders and titlebars entirely. At first, I thought this would be
+disorienting, but I've honestly gotten used to it.
+#+begin_src conf
+default_border none
+hide_edge_borders both
+#+end_src
+I start apps with =rofi=.
+#+begin_src conf
+bindsym $mod+d exec rofi -show combi
+bindsym $mod+b exec rofi -show window -dpi 1
+#+end_src
+Default basic bindings.
+#+begin_src conf
+# kill focused window
+bindsym $mod+q kill
+# split in horizontal orientation
+bindsym $mod+h split h
+
+# split in vertical orientation
+bindsym $mod+v split v
+
+# enter fullscreen mode for the focused container
+bindsym $mod+f fullscreen toggle
+
+# change container layout (stacked, tabbed, toggle split)
+bindsym $mod+s layout stacking
+bindsym $mod+w layout tabbed
+bindsym $mod+e layout toggle split
+
+# toggle tiling / floating
+bindsym $mod+Shift+space floating toggle
+
+# change focus between tiling / floating windows
+bindsym $mod+space focus mode_toggle
+
+# focus the parent container
+bindsym $mod+a focus parent
+
+# focus the child container
+#bindsym $mod+d focus child
+#+end_src
+* Graphics
+** Displays
+Sometimes I need to manually dock or undock.
+#+begin_src conf
+set $mode_monitors Monitor setup: (0) laptop only (1) external (2) mirror (3) external only (4) reset
+mode "$mode_monitors" {
+  bindsym 0 $exec "xrandr --output DP1 --off", mode "default"
+  bindsym 1 $exec "/home/gautam/bin/dock", mode "default"
+  bindsym 2 exec "xrandr --output eDP1 --mode 3200x1800 --output DP1 --same-as DP1 --mode 3840x2160 --scale 0.833x0.833"
+  bindsym 3 exec "xrandr --output eDP1 --off"
+  bindsym 4 exec "xrandr --output eDP1 --auto --primary && /home/gautam/bin/dock"
+
+  # back to normal: Enter or Escape
+  bindsym Return mode "default"
+  bindsym Escape mode "default"
+}
+
+bindsym $mod+p $exec dock
+bindsym $mod+shift+p mode "$mode_monitors"
+#+end_src
+Adjusting brightness.
+#+begin_src conf
+bindsym XF86MonBrightnessDown $exec change-brightness - 5
+bindsym XF86MonBrightnessUp $exec change-brightness + 5
+#+end_src
+** Workspaces
+A simple script + Org Babel tangling lets us save a lot of repetition over the
+default config.
+#+begin_src conf :noweb yes
+<<workspace-bindings()>>
+#+end_src
+The one thing to be careful about is that we don't try to bind =$mod+10=, because
+there is no "10" key.
+#+NAME: workspace-bindings
+#+begin_src sh :tangle no :results output :eval yes
+for num in $(seq 1 10); do
+    if [ $num == 10 ]; then
+        bind=0
+    else
+        bind=$num
+    fi
+    echo "set \$ws$num \"$num\""
+    echo "bindsym \$mod+$bind workspace \$ws$num"
+    echo "bindsym \$mod+Shift+$bind move container to workspace \$ws$num"
+done
+#+end_src
+Assign workspaces to certain displays.
+#+begin_src conf :noweb yes
+<<workspace-assignments()>>
+#+end_src
+#+NAME: workspace-assignments
+#+begin_src sh :tangle no :results output :eval yes
+for num in $(seq 1 3); do
+    echo "workspace \$ws$num output DP-1 DP1 primary"
+done
+for num in $(seq 4 9); do
+    echo "workspace \$ws$num output primary"
+done
+#+end_src
+Assign windows to certain workspaces.
+#+begin_src conf
+assign [class="^qutebrowser$"] → $ws2
+assign [class="^mpv$"] → $ws4
+assign [class="Slack"] → $ws4
+assign [class="^Inkscape$"] → $ws6
+assign [class="^qtcreator$"] → $ws6
+#+end_src
+Assign certain properties to windows.
+#+begin_src conf
+for_window [class="^Emacs$" title="^floatingEmacs$"] floating enable
+for_window [class="^Emacs$" title="^org-capture-pop-frame$"] move container to workspace current
+#+end_src
+I really like having a window open on one monitor and using the keyboard to
+control stuff on another monitor.
+#+begin_src conf
+focus_follows_mouse no
+#+end_src
+This is a cool script that lets me swap the workspaces on my monitors.
+#+begin_src conf
+bindsym $mod+shift+s $exec $HOME/.i3/i3-display-swap.sh
+#+end_src
+** Window Management
+All default stuff.
+#+begin_src conf
+# change focus
+bindsym $mod+j focus right
+bindsym $mod+k focus left
+bindsym $mod+l focus up
+bindsym $mod+semicolon focus down
+
+# alternatively, you can use the cursor keys:
+bindsym $mod+Left focus left
+bindsym $mod+Down focus down
+bindsym $mod+Up focus up
+bindsym $mod+Right focus right
+
+# move focused window
+bindsym $mod+Shift+j move right
+bindsym $mod+Shift+k move left
+bindsym $mod+Shift+l move up
+bindsym $mod+Shift+semicolon move down
+
+# alternatively, you can use the cursor keys:
+bindsym $mod+Shift+Left move left
+bindsym $mod+Shift+Down move right
+bindsym $mod+Shift+Up move up
+bindsym $mod+Shift+Right move down
+#+end_src
+Resize windows.
+#+begin_src conf
+# resize window (you can also use the mouse for that)
+mode "resize" {
+        # These bindings trigger as soon as you enter the resize mode
+
+        # Pressing left will shrink the window’s width.
+        # Pressing right will grow the window’s width.
+        # Pressing up will shrink the window’s height.
+        # Pressing down will grow the window’s height.
+        bindsym j resize shrink width 10 px or 10 ppt
+        bindsym k resize grow height 10 px or 10 ppt
+        bindsym l resize shrink height 10 px or 10 ppt
+        bindsym semicolon resize grow width 10 px or 10 ppt
+
+        # same bindings, but for the arrow keys
+        bindsym Left resize shrink width 10 px or 10 ppt
+        bindsym Down resize grow height 10 px or 10 ppt
+        bindsym Up resize shrink height 10 px or 10 ppt
+        bindsym Right resize grow width 10 px or 10 ppt
+
+        # back to normal: Enter or Escape or $mod+r
+        bindsym Return mode "default"
+        bindsym Escape mode "default"
+        bindsym $mod+r mode "default"
+}
+
+bindsym $mod+r mode "resize"
+#+end_src
+* Utilities
+** Audio
+The script =music-control= is in my =~/bin=. If it can, it connects to =emms= in
+Emacs. It falls back on =mpc=. This way, the elapsed time of a song is correct in
+Emacs.
+#+begin_src conf
+bindsym XF86AudioMute $exec "change-volume toggle"
+bindsym XF86AudioLowerVolume $exec "change-volume 3%- unmute"
+bindsym XF86AudioRaiseVolume $exec "change-volume 3%+ unmute"
+
+bindsym XF86AudioPrev $exec music-control prev
+bindsym XF86AudioNext $exec music-control next
+bindsym XF86AudioPlay $exec music-control toggle
+bindsym Pause $exec music-control toggle
+#+end_src
+** Screenshots
+Again, we use Babel to save some repetition.
+#+begin_src conf :noweb yes
+<<screenshot-commands()>>
+#+end_src
+The Python variable =commands= stores the binding and the options to =scrot=, the
+program we will use for taking the screenshot.
+#+begin_src conf :tangle no
+bindsym --release BIND $exec "scrot OPTIONS"
+#+end_src
+The values =path= and =target= are defined in the Org source block.
+#+NAME: screenshot-commands
+#+begin_src python :eval yes :tangle no :results output :var path="'/home/gautam/pictures/screenshots/%F_%T_$wx$h.png'" target="'xclip -selection clipboard -target image/png -i $f'"
+commands = {
+    "Print": "-s {} -e {}".format(path,target),
+    "Shift-Print": "{} -e {}".format(path,target),
+    "Ctrl-Print": "{}".format(path)}
+
+for bind in commands:
+    print("bindsym --release {} $exec \"scrot {}\"".format(bind,commands[bind]))
+#+end_src
+** Terminal
+#+begin_src conf
+set $term alacritty
+bindsym $mod+Return $exec emacsclient -e "(call-interactively 'eshell-other-frame)"
+bindsym $mod+Shift+Return exec $term
+#+end_src
+** Mail
+#+begin_src conf
+bindsym $mod+c $exec checkmail
+#+end_src
+** Shutdown Menu
+#+begin_src conf
+set $mode_system System (l) lock, (e) logout, (s) suspend, (h) hibernate, (r) reboot, (Shift+s) shutdown
+mode "$mode_system" {
+    bindsym l $exec slock, mode "default"
+    bindsym e $exec i3-msg exit, mode "default"
+    bindsym s $exec systemctl suspend, mode "default"
+    bindsym h $exec systemctl hibernate, mode "default"
+    bindsym r $exec systemctl reboot, mode "default"
+    bindsym Shift+s $exec systemctl poweroff -i, mode "default"
+
+    # back to normal: Enter or Escape
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+
+bindsym $mod+Pause mode "$mode_system"
+bindsym $mod+Delete mode "$mode_system"
+#+end_src
+** Reloading i3
+#+begin_src conf
+# reload the configuration file
+bindsym $mod+Shift+c reload
+# restart i3 inplace (preserves your layout/session, can be used to upgrade i3)
+bindsym $mod+Shift+r restart
+# exit i3 (logs you out of your X session)
+bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'You pressed the exit shortcut. Do you really want to exit i3? This will end your X session.' -B 'Yes, exit i3' 'i3-msg exit'"
+#+end_src
+* =i3bar=
+The official i3 status bar.
+#+begin_src conf
+bar {
+    status_command i3status --config=~/.i3/.i3status.conf
+}
+#+end_src
+* Options
+# Local variables:
+# eval: (add-hook 'after-save-hook 'org-babel-tangle nil t)
+# end:

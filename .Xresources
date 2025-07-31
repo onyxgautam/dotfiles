@@ -1,0 +1,27 @@
+Xft.dpi: 192
+URxvt.font: xft:Hack:size=10
+XTerm.vt100.faceName: Hack:size=12:antialias=true
+XTerm.vt100.font: 7x13
+XTerm.vt100.foreground: rgb:93/a1/a1
+XTerm.vt100.background: rgb:00/2b/36
+XTerm*selectToClipboard: true
+Xft.autohint: 0
+Xft.lcdfilter: lcddefault
+Xft.hintstyle: hintfull
+Xft.hinting: 1
+Xft.antialias: 1
+Xft.rgba: rgb
+Emacs.menuBar: off
+Emacs.toolBar: off
+Emacs.verticalScrollBars: off
+Emacs.cursorBlink: off
+Emacs.background: #002b36
+Emacs.foreground: #839496
+Emacs.font: Hack-10
+Emacs.mode-line.attributeForeground: #93a1a1
+Emacs.mode-line.attributeBackground: #002b36
+Emacs.mode-line.attributeBox: (:line-width 1 :color "#073642")
+rofi.combi-modi:    window,drun
+rofi.theme:         solarized
+rofi.font:          hack 24
+rofi.modi:          combi

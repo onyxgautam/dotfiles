@@ -1,0 +1,24 @@
+#!/bin/sh
+
+STATE=`ping -c 1 8.8.8.8 > /dev/null && echo "online" || echo "offline"`
+
+if [ "$STATE" = 'online' ]
+then
+    cd /home/gautam/mail/princeton
+    /usr/bin/gmi sync
+    /home/gautam/bin/loadmail
+    COUNT=`notmuch count tag:inbox and tag:unread`
+    MESSAGE="$COUNT unread message"
+    if (( $COUNT > 0 )); then
+        if (( $COUNT > 1 )); then
+            MESSAGE="${MESSAGE}s"
+        else
+            SENDER=`notmuch search tag:inbox`
+            MESSAGE="$MESSAGE $(cut -d ';' -f1 <<< $(cut -d ']' -f2 <<< $SENDER) | xargs)"
+        fi
+        notify-send "$MESSAGE"
+    fi
+    exit 0
+fi
+echo "No internet connection."
+exit 0
