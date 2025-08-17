@@ -1,0 +1,6 @@
+[options]
+sort=1
+
+[keybindings]
+n { goto_file_relative(1); }
+p { goto_file_relative(-1); }
